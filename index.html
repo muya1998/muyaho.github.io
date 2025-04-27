@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사주 기반 로또 번호 생성기</title>
+    <style>
+        body {
+            font-family: 'Nanum Gothic', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #4a4a4a;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .input-section {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input, select {
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result-section {
+            margin-top: 30px;
+        }
+        .saju-result {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .lotto-numbers {
+            margin-top: 20px;
+        }
+        .lotto-row {
+            display: flex;
+            margin-bottom: 10px;
+            justify-content: center;
+        }
+        .lotto-ball {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        .num-1-10 { background-color: #FFCC00; }
+        .num-11-20 { background-color: #3399FF; }
+        .num-21-30 { background-color: #FF6666; }
+        .num-31-40 { background-color: #999999; }
+        .num-41-45 { background-color: #66CC66; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>사주 기반 로또 번호 생성기</h1>
+        
+        <div class="input-section">
+            <label for="birthdate">생년월일 (양력)</label>
+            <input type="date" id="birthdate" required>
+            
+            <label for="birthtime">태어난 시간 (선택사항)</label>
+            <select id="birthtime">
+                <option value="">모름</option>
+                <option value="자시">자시 (23:00~01:00)</option>
+                <option value="축시">축시 (01:00~03:00)</option>
+                <option value="인시">인시 (03:00~05:00)</option>
+                <option value="묘시">묘시 (05:00~07:00)</option>
+                <option value="진시">진시 (07:00~09:00)</option>
+                <option value="사시">사시 (09:00~11:00)</option>
+                <option value="오시">오시 (11:00~13:00)</option>
+                <option value="미시">미시 (13:00~15:00)</option>
+                <option value="신시">신시 (15:00~17:00)</option>
+                <option value="유시">유시 (17:00~19:00)</option>
+                <option value="술시">술시 (19:00~21:00)</option>
+                <option value="해시">해시 (21:00~23:00)</option>
+            </select>
+            
+            <label for="rows">로또 번호 생성 줄 수</label>
+            <select id="rows">
+                <option value="5">5줄</option>
+                <option value="1">1줄</option>
+                <option value="10">10줄</option>
+            </select>
+            
+            <button id="generate-btn">로또 번호 생성하기</button>
+        </div>
+        
+        <div class="result-section" id="result-section" style="display: none;">
+            <h2>결과</h2>
+            
+            <div class="saju-result" id="saju-result">
+                <!-- 여기에 사주 결과가 표시됩니다 -->
+            </div>
+            
+            <h3>추천 로또 번호</h3>
+            <div class="lotto-numbers" id="lotto-numbers">
+                <!-- 여기에 로또 번호가 표시됩니다 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('generate-btn').addEventListener('click', function() {
+            const birthdate = document.getElementById('birthdate').value;
+            if (!birthdate) {
+                alert('생년월일을 입력해주세요.');
+                return;
+            }
+            
+            const birthtime = document.getElementById('birthtime').value;
+            const rows = parseInt(document.getElementById('rows').value);
+            
+            // 사주 계산 및 결과 생성
+            const sajuResult = calculateSaju(birthdate, birthtime);
+            displaySajuResult(sajuResult);
+            
+            // 로또 번호 생성
+            const lottoNumbers = generateLottoNumbers(sajuResult, rows);
+            displayLottoNumbers(lottoNumbers);
+            
+            // 결과 섹션 표시
+            document.getElementById('result-section').style.display = 'block';
+        });
+        
+        function calculateSaju(birthdate, birthtime) {
+            // 사주 계산 로직 (간단한 예시)
+            const date = new Date(birthdate);
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            
+            // 천간 (하늘의 기운) - 갑을병정무기경신임계
+            const sky = ['경', '신', '임', '계', '갑', '을', '병', '정', '무', '기'];
+            // 지지 (땅의 기운) - 자축인묘진사오미신유술해
+            const earth = ['신', '유', '술', '해', '자', '축', '인', '묘', '진', '사', '오', '미'];
+            
+            // 간단한 계산방식 (실제 사주 계산은 더 복잡합니다)
+            const skyIndex = (year - 1924) % 10;
+            const earthIndex = (year - 1924) % 12;
+            
+            // 월간과 일간, 시간 (단순화된 계산)
+            const monthSky = (skyIndex * 2 + month) % 10;
+            const monthEarth = (month + 2) % 12;
+            
+            const daySky = (year * 5 + Math.floor((year - 1) / 4) + Math.floor((year - 1) / 100) - Math.floor((year - 1) / 400) + day) % 10;
+            const dayEarth = (year * 5 + Math.floor((year - 1) / 4) + Math.floor((year - 1) / 100) - Math.floor((year - 1) / 400) + day + 6) % 12;
+            
+            // 오행 (목화토금수) 결정 - 간단한 매핑
+            const elements = {
+                '갑': '목', '을': '목',
+                '병': '화', '정': '화',
+                '무': '토', '기': '토',
+                '경': '금', '신': '금',
+                '임': '수', '계': '수',
+                '자': '수', '축': '토', '인': '목', '묘': '목',
+                '진': '토', '사': '화', '오': '화', '미': '토',
+                '신': '금', '유': '금', '술': '토', '해': '수'
+            };
+            
+            // 나의 사주 요소
+            const mySky = sky[daySky];
+            const myElement = elements[mySky];
+            
+            // 길운의 요소 결정 (상생 관계: 수→목→화→토→금→수)
+            let luckyElements = [];
+            switch(myElement) {
+                case '목': luckyElements = ['수', '화']; break;  // 수생목, 목생화
+                case '화': luckyElements = ['목', '토']; break;  // 목생화, 화생토
+                case '토': luckyElements = ['화', '금']; break;  // 화생토, 토생금
+                case '금': luckyElements = ['토', '수']; break;  // 토생금, 금생수
+                case '수': luckyElements = ['금', '목']; break;  // 금생수, 수생목
+            }
+            
+            return {
+                yearSky: sky[skyIndex],
+                yearEarth: earth[earthIndex],
+                monthSky: sky[monthSky],
+                monthEarth: earth[monthEarth],
+                daySky: sky[daySky],
+                dayEarth: earth[dayEarth],
+                myElement: myElement,
+                luckyElements: luckyElements,
+                birthYear: year,
+                birthMonth: month,
+                birthDay: day
+            };
+        }
+        
+        function displaySajuResult(sajuResult) {
+            const sajuResultDiv = document.getElementById('saju-result');
+            sajuResultDiv.innerHTML = `
+                <p><strong>당신의 사주:</strong></p>
+                <p>년주: ${sajuResult.yearSky}${sajuResult.yearEarth} (${sajuResult.birthYear}년)</p>
+                <p>월주: ${sajuResult.monthSky}${sajuResult.monthEarth} (${sajuResult.birthMonth}월)</p>
+                <p>일주: ${sajuResult.daySky}${sajuResult.dayEarth} (${sajuResult.birthDay}일)</p>
+                <p>당신의 주요 오행: <strong>${sajuResult.myElement}</strong></p>
+                <p>행운의 오행: <strong>${sajuResult.luckyElements.join(', ')}</strong></p>
+                <p>이를 바탕으로 당신에게 맞는 로또 번호를 생성했습니다.</p>
+            `;
+        }
+        
+        function generateLottoNumbers(sajuResult, rows) {
+            const lottoNumbers = [];
+            
+            // 오행에 기반한 번호 범위 설정
+            const elementRanges = {
+                '목': [1, 10],   // 1-10
+                '화': [11, 20],  // 11-20
+                '토': [21, 30],  // 21-30
+                '금': [31, 40],  // 31-40
+                '수': [41, 45]   // 41-45
+            };
+            
+            // 생년월일에서 기본 씨드 생성
+            let seed = sajuResult.birthYear + sajuResult.birthMonth * 100 + sajuResult.birthDay;
+            
+            // 행운의 오행 기반 가중치 부여
+            for (let i = 0; i < rows; i++) {
+                // 이 행의 번호를 위한 씨드 변경
+                const currentSeed = seed + i * 777;
+                
+                // 번호 선택 시작
+                let numbers = new Set();
+                
+                // 각 오행에서 번호 선택 비율 조정
+                // 행운의 오행에서 더 많은 번호를 선택
+                const luckyElementsSet = new Set(sajuResult.luckyElements);
+                
+                // 먼저 행운의 오행에서 3-4개 번호 선택
+                let luckyCount = 3 + Math.floor(currentSeed % 2); // 3 또는 4개
+                
+                for (const element of sajuResult.luckyElements) {
+                    if (luckyCount <= 0) break;
+                    
+                    const [min, max] = elementRanges[element];
+                    const range = max - min + 1;
+                    
+                    // 각 요소에서 1-2개 번호 선택
+                    const numToSelect = Math.min(Math.ceil(luckyCount / sajuResult.luckyElements.length), 2);
+                    
+                    for (let j = 0; j < numToSelect; j++) {
+                        if (numbers.size >= 6) break;
+                        
+                        // 의사난수 생성 (씨드 기반)
+                        const pseudoRandom = (currentSeed * (j + 1) * (i + 1) * (min + j)) % range;
+                        let num = min + pseudoRandom;
+                        
+                        // 이미 선택된 번호라면 다른 번호 찾기
+                        while (numbers.has(num)) {
+                            num = min + (num + 1) % range;
+                            if (num > max) num = min;
+                        }
+                        
+                        numbers.add(num);
+                        luckyCount--;
+                    }
+                }
+                
+                // 나머지 번호는 모든 범위에서 선택
+                while (numbers.size < 6) {
+                    // 선택되지 않은 오행을 통해 다양성 유지
+                    const elements = Object.keys(elementRanges);
+                    const elementIndex = (currentSeed * numbers.size) % elements.length;
+                    const element = elements[elementIndex];
+                    
+                    const [min, max] = elementRanges[element];
+                    const range = max - min + 1;
+                    
+                    // 의사난수 생성
+                    const pseudoRandom = (currentSeed * numbers.size * (i + 1) * (min + numbers.size)) % range;
+                    let num = min + pseudoRandom;
+                    
+                    // 이미 선택된 번호라면 다른 번호 찾기
+                    while (numbers.has(num)) {
+                        num = min + (num + 1) % range;
+                        if (num > max) num = min;
+                    }
+                    
+                    numbers.add(num);
+                }
+                
+                // 결과 배열에 정렬된 번호 추가
+                lottoNumbers.push([...numbers].sort((a, b) => a - b));
+            }
+            
+            return lottoNumbers;
+        }
+        
+        function displayLottoNumbers(lottoNumbers) {
+            const lottoNumbersDiv = document.getElementById('lotto-numbers');
+            lottoNumbersDiv.innerHTML = '';
+            
+            lottoNumbers.forEach((row, index) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'lotto-row';
+                
+                // 행 번호 표시
+                const rowNum = document.createElement('div');
+                rowNum.style.marginRight = '10px';
+                rowNum.style.width = '30px';
+                rowNum.style.textAlign = 'right';
+                rowNum.textContent = `${index + 1}. `;
+                rowDiv.appendChild(rowNum);
+                
+                // 각 번호를 로또볼로 표시
+                row.forEach(num => {
+                    const ball = document.createElement('div');
+                    ball.className = 'lotto-ball';
+                    
+                    // 번호 범위에 따른 색상 지정
+                    if (num >= 1 && num <= 10) {
+                        ball.classList.add('num-1-10');
+                    } else if (num >= 11 && num <= 20) {
+                        ball.classList.add('num-11-20');
+                    } else if (num >= 21 && num <= 30) {
+                        ball.classList.add('num-21-30');
+                    } else if (num >= 31 && num <= 40) {
+                        ball.classList.add('num-31-40');
+                    } else {
+                        ball.classList.add('num-41-45');
+                    }
+                    
+                    ball.textContent = num;
+                    rowDiv.appendChild(ball);
+                });
+                
+                lottoNumbersDiv.appendChild(rowDiv);
+            });
+        }
+    </script>
+</body>
+</html>
